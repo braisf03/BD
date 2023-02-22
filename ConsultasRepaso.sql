@@ -1,4 +1,5 @@
 /* EJERCICIOS 1 */
+
 /* 1.Mostra os postos de traballo que hai en cada departamento (código de dept e
 nome do posto de traballo). Non deben aparecer repetidos. */
 
@@ -181,3 +182,253 @@ SELECT DISTINCT deptno
 FROM emp 
 GROUP BY deptno,job
 HAVING count(*)>2
+
+/* EJERCICIOS 5 */
+
+/* 1. Para cada proxecto mostra o seu nome e o nome do departamento que os
+controla. */
+
+SELECT pro.pname, dept.dname
+FROM pro JOIN dept
+ON pro.deptno = dept.deptno
+
+/* 2. Para cada empregado mostra o seu nome e os códigos de proxectos para os que
+traballa. */
+
+SELECT DISTINCT emp.ename, pro.prono
+FROM emp JOIN pro 
+ON emp.deptno=pro.deptno
+ORDER BY prono
+
+/* 3. Para cada empregado mostra o seu nome e os códigos de proxectos para os que
+traballa. Se hai empregados que non traballan en proxectos, estes deben aparecer
+co código de proxecto a nulo. */
+
+SELECT emp.ename, pro.prono
+FROM emp LEFT JOIN pro 
+ON emp.deptno=pro.deptno
+ORDER BY prono
+
+/* 4. Para cada empregado mostra o nome do seu xefe; se non ten xefe, mostra un nulo
+no nome do xefe. */
+
+SELECT e.ename, o.ename
+FROM emp e LEFT JOIN emp o
+ON e.mgr=o.empno
+ORDER BY e.mgr
+
+/* 5. Para cada empregado mostra o seu nome, o nome do seu xefe e o departamento
+para o que traballa o seu xefe. */
+
+SELECT e.ename, o.ename, o.deptno
+FROM emp e LEFT JOIN emp o
+ON e.mgr=o.empno
+ORDER BY o.deptno
+
+/* 6. Devolve os empregados que teñen un salario máis alto que o seu xefe. */
+
+SELECT e.ename, e.sal, j.ename, j.sal
+FROM emp e JOIN emp j ON e.mgr=j.empno
+WHERE e.sal>j.sal
+
+/* EJERCICIOS 6 */
+
+/* 1. Para cada empregado mostra o seu nome e cantas horas traballou en proxectos. */
+
+SELECT ename, sum(hours) 
+FROM emp e JOIN emppro ep 
+ON e.empno=ep.empno
+GROUP BY ename
+
+/*2. Para cada departamento, mostra o seu nome e cantos empregados ten. */
+
+SELECT DISTINCT dept.dname, count(ename)
+FROM emp JOIN dept 
+ON emp.deptno=dept.deptno
+GROUP BY dept.dname
+
+/*3. Para cada xefe, mostra o seu nome e cantos subordinados ten.*/
+
+SELECT DISTINCT j.ename,count(e.ename) 
+FROM emp e RIGHT JOIN emp j 
+ON e.mgr = j.empno 
+GROUP BY j.ename
+ORDER BY j.ename
+
+/*4. Mostra o nome de proxectos onde se traballou (en total, todos os empregados)
+máis de 15 horas. */
+
+SELECT ep.prono, sum(ep.hours)
+FROM emp e JOIN emppro ep 
+ON e.empno=ep.empno
+GROUP BY ep.prono
+ORDER BY ep.prono
+
+/*5. Mostra os departamentos (nome) que controlan máis de dous proxectos. */
+
+SELECT dept.dname, count(pname)
+FROM pro JOIN dept
+ON pro.deptno=dept.deptno
+GROUP BY dept.dname
+HAVING count(*)>2
+
+/*6. Mostra os departamentos (nome) onde hai polo menos dous empregados co
+mesmo posto de traballo. Non deben aparecer repetidos. */
+
+SELECT DISTINCT dept.dname, emp.job
+FROM emp RIGHT JOIN dept
+ON emp.deptno = dept.deptno
+GROUP BY dept.dname, emp.job
+HAVING count(emp.job)>=2
+
+/*7. Para cada departamento mostra o seu nome e cantos empregados ten; se non ten
+ningún, hai que indicalo cun 0. */
+
+SELECT dept.dname, count(emp.ename)
+FROM emp RIGHT JOIN dept
+ON emp.deptno=dept.deptno
+GROUP BY dept.dname
+ORDER BY dept.dname
+
+/*8. Para cada empregado mostra as horas que traballou en proxectos; se non traballou
+en ningún, hai que indicalo cun 0. */
+
+SELECT DISTINCT emp.ename, coalesce(sum(emppro.hours),0)
+FROM emp LEFT JOIN emppro
+ON emp.empno = emppro.empno
+GROUP BY emp.ename
+
+/*9. Para cada xefe, cantos subordinados gañan máis ca el; se non o gaña ningún, hai
+que indicalo cun 0. */
+
+SELECT DISTINCT e.ename,count(j.ename)
+FROM emp e LEFT JOIN emp j
+ON e.empno=j.mgr
+AND j.sal>e.sal
+GROUP BY e.ename,e.empno
+
+/* EJERCICIOS 7 */
+
+/* 1. Empregados que teñen un salario maior ao salario medio da empresa. */
+
+SELECT *
+FROM emp 
+WHERE sal > (SELECT avg(sal)
+			 FROM emp)
+ORDER BY deptno
+
+/* 2. Para cada departamento, mostra cantos empregados ten que gañen máis do
+salario medio da empresa. Mostra o nome do departamento. */
+
+SELECT DISTINCT dept.dname,count(*)
+FROM emp JOIN dept
+ON emp.deptno=dept.deptno
+WHERE sal>(SELECT avg(sal)
+			FROM emp)
+GROUP BY dept.dname
+
+/* 3. Empregados que son xefe. Mostra o seu nome. */
+
+SELECT DISTINCT e.ename
+FROM emp e JOIN emp j 
+ON e.empno=j.mgr 
+
+/* 4. Empregados que non son xefe. Mostra o seu nome. */
+
+SELECT ename 
+FROM emp  
+WHERE empno NOT IN (SELECT DISTINCT mgr 
+					FROM emp
+					WHERE mgr IS NOT NULL)
+
+/* 5. Mostra o(s) empregado(s) (nome) co salario máis alto. */
+
+SELECT ename
+FROM emp 
+WHERE sal=(SELECT max(sal)
+			FROM emp)
+
+/* 6. Mostra o departamento (nome) coa suma de salarios máis alta. */
+
+SELECT dname
+FROM emp JOIN dept
+ON emp.deptno=dept.deptno
+GROUP BY dept.deptno,dept.dname
+HAVING sum(sal)=(SELECT max(sum(sal))
+				 FROM emp
+				 GROUP BY deptno)
+
+/* 7. Para os departamentos que teñen empregados con comisión, mostra cantos
+empregados teñen comisión, e cantos non. Mostra o nome do departamento. */
+
+SELECT dept.dname,count(comm),count(*)-count(comm)
+FROM emp JOIN dept
+ON emp.deptno=dept.deptno
+WHERE emp.deptno IN (SELECT deptno
+					 FROM emp
+					 WHERE comm IS NOT NULL)
+GROUP BY dept.dname
+
+/* EJERCICIOS 8 */
+
+/* 1. Mostra o(s) empregado(s) co salario máis alto de cada departamento. */
+
+SELECT ename,deptno,sal
+FROM emp a
+WHERE sal = (SELECT max(sal)
+			 FROM emp
+			 WHERE deptno=a.deptno)
+
+/* 2. Mostra o código do(s) empregado(s) que máis horas traballa(n) en cada proxecto. */
+
+SELECT empno, prono, hours
+FROM emppro e
+WHERE hours=(SELECT max(hours)
+			 FROM emppro
+			 WHERE prono=e.prono)
+ORDER BY prono
+
+/* 3. Mostra o nome do(s) empreado(s) que máis horas traballa(n) en cada proxecto. */
+
+SELECT e.ename,ep.hours,ep.prono
+FROM emp e JOIN emppro ep
+ON e.empno=ep.empno
+WHERE hours =(SELECT max(hours)
+			  FROM emppro
+			  WHERE prono=ep.prono)
+			  ORDER BY prono
+
+/* 4. Mostra o nome do(s) empregado(s) que máis horas traballa(n) en cada proxecto.
+Mostra tamén o nome do proxecto. */
+
+SELECT e.ename,ep.hours,p.prono
+FROM emp e JOIN emppro ep ON e.empno=ep.empno 
+JOIN pro p ON p.deptno=e.deptno
+WHERE hours =(SELECT max(hours)
+			  FROM emppro
+			  WHERE prono=p.prono)
+ORDER BY p.prono
+			  
+
+/* 5. Para cada departamento mostra o seu nome e cantos empregados dese
+departamento teñen un salario maior ao salario medio do seu departamento. */
+
+SELECT d.dname,count(*)
+FROM emp e JOIN dept d 
+ON e.deptno=d.deptno
+WHERE e.sal>(SELECT avg(sal)
+			 FROM emp 
+			 WHERE deptno=e.deptno)
+GROUP BY d.dname,e.deptno
+ORDER BY e.deptno
+
+/*6. Para cada departamento mostra o seu nome e cantos empregados gañan máis que
+o seu xefe. */
+
+SELECT d.dname,count(*)
+FROM emp e JOIN emp ep 
+ON e.empno=ep.mgr
+		   JOIN dept d 
+		   ON d.deptno=e.deptno
+WHERE ep.sal>e.sal
+GROUP BY d.dname
