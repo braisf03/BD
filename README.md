@@ -5,4 +5,4 @@ Prácticas Bases de Datos (curso 2022/23)
 ## Calificaciones
 
 - **Examen SQL:** *1.25/2*
-- **Trabajo Tutelado:** *NaN*
+- **Trabajo Tutelado:** *1.45/2*
